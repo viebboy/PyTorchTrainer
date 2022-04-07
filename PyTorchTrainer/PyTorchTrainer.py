@@ -449,6 +449,7 @@ class RegressionTrainer(ClassifierTrainer):
             self.update_lr(optimizer)
 
             inputs = inputs.to(device)
+            targets = targets.to(device)
 
             predictions = model(inputs)
             loss = L(predictions, targets)
