@@ -475,15 +475,16 @@ class RegressionTrainer(ClassifierTrainer):
             total_minibatch = len(loader)
 
         with torch.no_grad():
-            for minibatch_idx, (inputs, _) in enumerate(loader):
+            for minibatch_idx, (inputs, targets) in enumerate(loader):
                 if minibatch_idx == total_minibatch:
                     break
 
                 inputs = inputs.to(device)
+                targets = targets.to(device)
 
                 predictions = model(inputs)
                 n_sample += inputs.size(0)
-                loss += L(predictions, inputs).item()
+                loss += L(predictions, targets).item()
 
         performance = {'mean_squared_error': loss / n_sample}
 
