@@ -99,13 +99,19 @@ class ClassifierTrainer:
                                 device)
             n_epoch_done += 1
 
-            if self.print_freq > 0 and (self.epoch_idx + 1) % self.print_freq == 0:
-                self.print_metrics(n_epoch_done)
 
-            self.update_tensorboard(tensorboard_logger, logger_prefix)
 
             # save checkpoint
             if self.checkpoint_freq > 0 and (self.epoch_idx + 1) % self.checkpoint_freq == 0:
+                # evaluate
+                train_metrics = self.eval(model, train_loader, device)
+                val_metrics = self.eval(model, val_loader, device)
+                test_metrics = self.eval(model, test_loader, device)
+
+                # append current performance to performance list
+                self.update_metrics(train_metrics, val_metrics, test_metrics)
+                self.update_tensorboard(tensorboard_logger, logger_prefix)
+
                 checkpoint = {'epoch_idx': self.epoch_idx,
                               'model_state_dict': model.state_dict(),
                               'optimizer_state_dict': optimizer.state_dict(),
@@ -115,6 +121,9 @@ class ClassifierTrainer:
                 fid = open(checkpoint_file, 'wb')
                 pickle.dump(checkpoint, fid)
                 fid.close()
+
+            if self.print_freq > 0 and (self.epoch_idx + 1) % self.print_freq == 0:
+                self.print_metrics(n_epoch_done)
 
             self.epoch_idx += 1
 
@@ -343,13 +352,6 @@ class ClassifierTrainer:
         # perform parameter updates
         self.update_loop(model, train_loader, optimizer, device)
 
-        # evaluate
-        train_metrics = self.eval(model, train_loader, device)
-        val_metrics = self.eval(model, val_loader, device)
-        test_metrics = self.eval(model, test_loader, device)
-
-        # append current performance to performance list
-        self.update_metrics(train_metrics, val_metrics, test_metrics)
 
     def load_from_checkpoint(self, model, optimizer, device):
         if self.epoch_idx == -1:
